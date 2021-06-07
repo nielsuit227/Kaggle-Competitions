@@ -1,5 +1,5 @@
 from sklearn.ensemble import StackingClassifier, RandomForestClassifier
-from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import RidgeClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import log_loss
@@ -13,7 +13,7 @@ import os
 
 
 # Data
-data = pd.read_csv('Data/train.csv', index_col='id')
+data = pd.read_csv('Data/June/train.csv', index_col='id')
 Y = data['target'].apply(lambda x: int(x[6]))
 Y.loc[Y == Y.max()] = 0
 X = data.drop('target', axis=1)
@@ -38,7 +38,7 @@ models = [
     ('linear', RidgeClassifier()),
     ('elastic', LogisticRegression(penalty='elasticnet', solver='saga', l1_ratio=0.5)),
     ('knn', KNeighborsClassifier(**knn_params)),
-    # ('svm', SVC()),
+    ('nb', GaussianNB()),
     ('rf', RandomForestClassifier()),
     ('lgbm', LGBMClassifier(**lgbm_params)),
     ('cb', CatBoostClassifier(**cb_params)),
@@ -65,7 +65,7 @@ for i, (ti, vi) in enumerate(cv.split(X, Y)):
 print('Avg. log loss: %.2f \u00B1 %.2f' % (np.mean(logLoss), np.std(logLoss)))
 
 # Produce Prediction Results
-test = pd.read_csv('Data/test.csv', index_col='id')
+test = pd.read_csv('Data/June/test.csv', index_col='id')
 Xt = scaler.transform(test[keys])
 
 model = StackingClassifier(estimators=models, n_jobs=8, final_estimator=final_estimator)
@@ -75,4 +75,4 @@ Prediction = pd.DataFrame(data=model.predict_proba(Xt),
                           columns=['Class_4', 'Class_1', 'Class_2', 'Class_3'],
                           index=np.linspace(100000, 100000 + len(Xt) - 1, len(Xt)).astype('int'))
 version = len([x for x in os.listdir('Data') if 'Stacking' in x])
-Prediction.to_csv('Data/Stacking_vi.csv' % version, index_label='id')
+Prediction.to_csv('Data/June/Stacking_vi.csv' % version, index_label='id')
